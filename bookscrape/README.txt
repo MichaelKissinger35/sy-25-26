@@ -2,6 +2,8 @@ Eddie- Software Developer
 Izaiah- QA
 Michael-Product/Project Manager
 
+Project Spec: Scrape the website to sort all books from most expensive to least expensive
+
 
 import requests
 from bs4 import BeautifulSoup
