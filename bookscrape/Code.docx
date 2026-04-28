@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import time
 
 def scrape_all_books():
     base_url = "https://books.toscrape.com/catalogue/page-{}.html"
@@ -9,18 +10,35 @@ def scrape_all_books():
     
     for page in range(1, 51):
         url = base_url.format(page)
-        response = requests.get(url)
+        print(f"Scraping page {page}...")  # Log progress
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            print(f"Failed to retrieve page {page}: {e}")
+            continue
+
         soup = BeautifulSoup(response.content, 'html.parser')
-        
         books = soup.find_all('article', class_='product_pod')
         
+        if not books:
+            print(f"No books found on page {page}. Skipping...")
+            continue
+        
         for book in books:
-            title = book.h3.a['title']
-            
-            price_text = book.find('p', class_='price_color').text
-            price = float(price_text.replace('£', ''))
+            title = book.h3.a.get('title', '').strip()
+            price_tag = book.find('p', class_='price_color')
+            if not price_tag:
+                continue
+            price_text = price_tag.text
+            try:
+                price = float(price_text.replace('£', ''))
+            except ValueError:
+                price = 0.0
             
             all_books.append({'title': title, 'price': price})
+
+        time.sleep(0.5)  # Be polite to the server
 
     sorted_books = sorted(all_books, key=lambda x: x['price'], reverse=True)
     return sorted_books
